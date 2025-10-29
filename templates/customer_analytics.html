@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}My Analytics - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-pie"></i> My Financial Analytics</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Key Metrics -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h2>{{ customer_loans|length }}</h2>
+                                    <p class="mb-0">Total Loans</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h2>₹{{ "{:,.0f}".format(total_borrowed) }}</h2>
+                                    <p class="mb-0">Total Borrowed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h2>₹{{ "{:,.0f}".format(total_paid) }}</h2>
+                                    <p class="mb-0">Total Paid</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loan History -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>My Loan History</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if customer_loans %}
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Loan Number</th>
+                                                    <th>Amount</th>
+                                                    <th>Status</th>
+                                                    <th>Date</th>
+                                                    <th>Remaining</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for loan in customer_loans %}
+                                                <tr>
+                                                    <td>{{ loan.loan_number }}</td>
+                                                    <td>₹{{ "{:,.2f}".format(loan.principal_amount) }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{% if loan.status == 'active' %}success{% elif loan.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                                            {{ loan.status.title() }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ loan.created_at.strftime('%Y-%m-%d') }}</td>
+                                                    <td>₹{{ "{:,.2f}".format(loan.remaining_balance) }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center">
+                                        <i class="fas fa-chart-line text-muted" style="font-size: 3rem;"></i>
+                                        <h4 class="mt-3">No Loans Yet</h4>
+                                        <p class="text-muted">You haven't applied for any loans yet.</p>
+                                        <a href="{{ url_for('apply_loan') }}" class="btn btn-primary">
+                                            <i class="fas fa-plus"></i> Apply for a Loan
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Quick Actions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <a href="{{ url_for('apply_loan') }}" class="btn btn-outline-primary w-100">
+                                                <i class="fas fa-plus"></i><br>
+                                                Apply for Loan
+                                            </a>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <a href="{{ url_for('loans') }}" class="btn btn-outline-info w-100">
+                                                <i class="fas fa-list"></i><br>
+                                                View All Loans
+                                            </a>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <a href="{{ url_for('credit_score') }}" class="btn btn-outline-success w-100">
+                                                <i class="fas fa-chart-line"></i><br>
+                                                Credit Score
+                                            </a>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <a href="{{ url_for('payment_reminders') }}" class="btn btn-outline-warning w-100">
+                                                <i class="fas fa-bell"></i><br>
+                                                Reminders
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+
+
+
+

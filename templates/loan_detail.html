@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Details - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Loan Details</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('loans') }}">Loans</a></li>
+                <li class="breadcrumb-item active">{{ loan.loan_number }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Loan Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>Loan Number:</strong></td>
+                        <td>{{ loan.loan_number }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Customer:</strong></td>
+                        <td>{{ loan.customer.user.full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Type:</strong></td>
+                        <td>{{ loan.loan_type.title() }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Principal Amount:</strong></td>
+                        <td>₹{{ "%.2f"|format(loan.principal_amount) }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Interest Rate:</strong></td>
+                        <td>{{ loan.interest_rate }}%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Term:</strong></td>
+                        <td>{{ loan.loan_term_months }} months</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Monthly Payment:</strong></td>
+                        <td>₹{{ "%.2f"|format(loan.monthly_payment) }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Amount:</strong></td>
+                        <td>₹{{ "%.2f"|format(loan.total_amount) }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Remaining Balance:</strong></td>
+                        <td>₹{{ "%.2f"|format(loan.remaining_balance) }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if loan.status == 'active' else 'warning' if loan.status == 'pending' else 'secondary' }}">
+                                {{ loan.status.title() }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% if loan.disbursement_date %}
+                    <tr>
+                        <td><strong>Disbursement Date:</strong></td>
+                        <td>{{ loan.disbursement_date.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Payment Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <h6>Total Payments</h6>
+                        <p class="text-primary">₹{{ "%.2f"|format(loan.total_amount - loan.remaining_balance) }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h6>Remaining</h6>
+                        <p class="text-danger">₹{{ "%.2f"|format(loan.remaining_balance) }}</p>
+                    </div>
+                </div>
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" 
+                         style="width: {{ ((loan.total_amount - loan.remaining_balance) / loan.total_amount * 100) }}%">
+                        {{ "%.1f"|format((loan.total_amount - loan.remaining_balance) / loan.total_amount * 100) }}% Paid
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if loan.status == 'active' %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Make Payment</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('make_payment', loan_id=loan.id) }}">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Payment Amount</label>
+                        <input type="number" class="form-control" id="amount" name="amount" 
+                               step="0.01" min="0" max="{{ loan.remaining_balance }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method" name="payment_method" required>
+                            <option value="">Select method</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="debit_card">Debit Card</option>
+                            <option value="cash">Cash</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Make Payment</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Documents</h5>
+                <a href="{{ url_for('download_loan_report', loan_id=loan.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-download"></i> Download Report
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('upload_document', loan_id=loan.id) }}" enctype="multipart/form-data" class="mb-3">
+                    <div class="input-group">
+                        <input type="file" class="form-control" name="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">Allowed types: PDF, DOC, DOCX, JPG, JPEG, PNG (Max 16MB)</small>
+                </form>
+                
+                {% if loan.documents %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Type</th>
+                                <th>Size</th>
+                                <th>Uploaded</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in loan.documents %}
+                            <tr>
+                                <td>{{ doc.original_filename }}</td>
+                                <td>{{ doc.file_type.upper() }}</td>
+                                <td>{{ "%.1f"|format(doc.file_size / 1024) }} KB</td>
+                                <td>{{ doc.uploaded_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if doc.is_verified else 'warning' }}">
+                                        {{ 'Verified' if doc.is_verified else 'Pending' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('download_document', document_id=doc.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">No documents uploaded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Payment Schedule</h5>
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Payment #</th>
+                                <th>Due Date</th>
+                                <th>Amount Due</th>
+                                <th>Amount Paid</th>
+                                <th>Late Fee</th>
+                                <th>Status</th>
+                                <th>Payment Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.payment_number }}</td>
+                                <td>{{ payment.payment_date.strftime('%Y-%m-%d') }}</td>
+                                <td>₹{{ "%.2f"|format(payment.amount_due) }}</td>
+                                <td>₹{{ "%.2f"|format(payment.amount_paid) }}</td>
+                                <td>₹{{ "%.2f"|format(payment.late_fee) }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if payment.status == 'paid' else 'warning' if payment.status == 'pending' else 'danger' }}">
+                                        {{ payment.status.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if payment.amount_paid > 0 %}
+                                        {{ payment.payment_date.strftime('%Y-%m-%d') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">No payment schedule found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

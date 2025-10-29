@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Auto Payments - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-credit-card text-primary"></i> Auto Payments</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#autoPaymentModal">
+                    <i class="fas fa-plus"></i> Setup Auto Payment
+                </button>
+            </div>
+
+            <!-- Auto Payment Setup Modal -->
+            <div class="modal fade" id="autoPaymentModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Setup Auto Payment</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="autoPaymentForm">
+                                <div class="mb-3">
+                                    <label for="loan_select" class="form-label">Select Loan</label>
+                                    <select class="form-select" id="loan_select" required>
+                                        <option value="">Choose a loan...</option>
+                                        <!-- Loans will be populated via JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="payment_method" class="form-label">Payment Method</label>
+                                    <select class="form-select" id="payment_method" required>
+                                        <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="credit_card">Credit Card</option>
+                                        <option value="ach">ACH Transfer</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="amount_type" class="form-label">Payment Amount</label>
+                                    <select class="form-select" id="amount_type" required onchange="toggleCustomAmount()">
+                                        <option value="full">Full Monthly Payment</option>
+                                        <option value="minimum">Minimum Payment</option>
+                                        <option value="custom">Custom Amount</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="custom_amount_div" style="display: none;">
+                                    <label for="custom_amount" class="form-label">Custom Amount</label>
+                                    <input type="number" class="form-control" id="custom_amount" 
+                                           min="0" step="0.01">
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Note:</strong> Auto payments will be processed automatically on the due date. 
+                                    You can modify or cancel this setup at any time.
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="setupAutoPayment()">Setup Auto Payment</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auto Payment Cards -->
+            <div class="row">
+                {% for auto_payment in auto_payments %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ auto_payment.loan.loan_number }}</h6>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Payment Method</small>
+                                    <p class="mb-1">
+                                        <strong>
+                                            {% if auto_payment.payment_method == 'bank_transfer' %}
+                                                <i class="fas fa-university"></i> Bank Transfer
+                                            {% elif auto_payment.payment_method == 'credit_card' %}
+                                                <i class="fas fa-credit-card"></i> Credit Card
+                                            {% else %}
+                                                <i class="fas fa-exchange-alt"></i> ACH Transfer
+                                            {% endif %}
+                                        </strong>
+                                    </p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Amount Type</small>
+                                    <p class="mb-1"><strong>{{ auto_payment.amount_type.title() }}</strong></p>
+                                </div>
+                            </div>
+                            {% if auto_payment.custom_amount %}
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <small class="text-muted">Custom Amount</small>
+                                    <p class="mb-1"><strong>${{ "{:,.2f}".format(auto_payment.custom_amount) }}</strong></p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="row mt-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Next Payment</small>
+                                    <p class="mb-1">
+                                        {% if auto_payment.next_payment_date %}
+                                            {{ auto_payment.next_payment_date.strftime('%Y-%m-%d') }}
+                                        {% else %}
+                                            TBD
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Last Processed</small>
+                                    <p class="mb-1">
+                                        {% if auto_payment.last_processed %}
+                                            {{ auto_payment.last_processed.strftime('%Y-%m-%d') }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-warning btn-sm" onclick="editAutoPayment('{{ auto_payment.id }}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="cancelAutoPayment('{{ auto_payment.id }}')">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if not auto_payments %}
+            <div class="text-center py-5">
+                <i class="fas fa-credit-card fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Auto Payments Setup</h4>
+                <p class="text-muted">Setup automatic payments to never miss a due date and avoid late fees.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#autoPaymentModal">
+                    <i class="fas fa-plus"></i> Setup Auto Payment
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Benefits Section -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-star text-warning"></i> Benefits of Auto Payments</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 text-center mb-3">
+                                    <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                                    <h6>Never Miss Payments</h6>
+                                    <small class="text-muted">Automatic processing ensures timely payments</small>
+                                </div>
+                                <div class="col-md-3 text-center mb-3">
+                                    <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                                    <h6>Avoid Late Fees</h6>
+                                    <small class="text-muted">No more late payment penalties</small>
+                                </div>
+                                <div class="col-md-3 text-center mb-3">
+                                    <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                                    <h6>Improve Credit Score</h6>
+                                    <small class="text-muted">Consistent on-time payments boost your credit</small>
+                                </div>
+                                <div class="col-md-3 text-center mb-3">
+                                    <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+                                    <h6>Secure & Safe</h6>
+                                    <small class="text-muted">Bank-level security for your payments</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load available loans for auto payment setup
+function loadLoans() {
+    fetch('/loans')
+    .then(response => response.text())
+    .then(html => {
+        // Parse loans from the page (simplified approach)
+        // In a real application, you'd have a dedicated API endpoint
+        const loanSelect = document.getElementById('loan_select');
+        // This would be populated with actual loan data
+    });
+}
+
+function toggleCustomAmount() {
+    const amountType = document.getElementById('amount_type').value;
+    const customAmountDiv = document.getElementById('custom_amount_div');
+    
+    if (amountType === 'custom') {
+        customAmountDiv.style.display = 'block';
+        document.getElementById('custom_amount').required = true;
+    } else {
+        customAmountDiv.style.display = 'none';
+        document.getElementById('custom_amount').required = false;
+    }
+}
+
+function setupAutoPayment() {
+    const form = document.getElementById('autoPaymentForm');
+    const formData = new FormData(form);
+    
+    const data = {
+        loan_id: parseInt(document.getElementById('loan_select').value),
+        payment_method: document.getElementById('payment_method').value,
+        amount_type: document.getElementById('amount_type').value,
+        custom_amount: document.getElementById('custom_amount').value ? 
+                      parseFloat(document.getElementById('custom_amount').value) : null
+    };
+    
+    if (!data.loan_id || !data.payment_method || !data.amount_type) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    fetch('/api/auto-payment/setup', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while setting up auto payment.');
+    });
+}
+
+function editAutoPayment(autoPaymentId) {
+    // Implementation for editing auto payment
+    alert('Edit functionality coming soon!');
+}
+
+function cancelAutoPayment(autoPaymentId) {
+    if (confirm('Are you sure you want to cancel this auto payment setup?')) {
+        // Implementation for canceling auto payment
+        alert('Cancel functionality coming soon!');
+    }
+}
+
+// Load loans when modal opens
+document.getElementById('autoPaymentModal').addEventListener('show.bs.modal', function () {
+    loadLoans();
+});
+</script>
+{% endblock %}
+
+
+
+
+
+
+

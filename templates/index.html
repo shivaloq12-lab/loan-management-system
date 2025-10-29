@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="jumbotron bg-primary text-white p-5 rounded mb-4">
+            <h1 class="display-4">Welcome to Loan Management System</h1>
+            <p class="lead">Your trusted partner for all loan needs</p>
+            <hr class="my-4">
+            <p>Apply for loans, track payments, and manage your finances all in one place.</p>
+            <a class="btn btn-light btn-lg" href="{{ url_for('register') }}" role="button">Get Started</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-user-tie fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Personal Loans</h5>
+                <p class="card-text">Get personal loans with competitive rates</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-home fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Home Loans</h5>
+                <p class="card-text">Finance your dream home with our home loans</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-car fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Car Loans</h5>
+                <p class="card-text">Drive away with our flexible car financing</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

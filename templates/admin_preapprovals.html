@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Pre-Approvals - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-check-circle text-primary"></i> Pre-Approval Management</h2>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" onclick="refreshData()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pre-Approval Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">{{ preapprovals|length }}</h5>
+                            <p class="card-text">Total Requests</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">{{ preapprovals|selectattr('status', 'equalto', 'pending')|list|length }}</h5>
+                            <p class="card-text">Pending</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ preapprovals|selectattr('status', 'equalto', 'approved')|list|length }}</h5>
+                            <p class="card-text">Approved</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">{{ preapprovals|selectattr('status', 'equalto', 'rejected')|list|length }}</h5>
+                            <p class="card-text">Rejected</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pre-Approval Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Pre-Approval Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Pre-Approval #</th>
+                                    <th>Customer</th>
+                                    <th>Requested Amount</th>
+                                    <th>Loan Type</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Expires</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for preapproval in preapprovals %}
+                                <tr>
+                                    <td><strong>{{ preapproval.preapproval_number }}</strong></td>
+                                    <td>{{ preapproval.customer.user.full_name }}</td>
+                                    <td>${{ "{:,.2f}".format(preapproval.requested_amount) }}</td>
+                                    <td>{{ preapproval.loan_type }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if preapproval.status == 'approved' %}bg-success
+                                            {% elif preapproval.status == 'pending' %}bg-warning
+                                            {% elif preapproval.status == 'rejected' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ preapproval.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ preapproval.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ preapproval.expires_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if preapproval.status == 'pending' %}
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-success" onclick="approvePreapproval({{ preapproval.id }})">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                            <button class="btn btn-danger" onclick="rejectPreapproval({{ preapproval.id }})">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        </div>
+                                        {% else %}
+                                        <small class="text-muted">{{ preapproval.status.title() }}</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Pre-Approval Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Approve Pre-Approval</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="approveForm">
+                    <div class="mb-3">
+                        <label for="approved_amount" class="form-label">Approved Amount</label>
+                        <input type="number" class="form-control" id="approved_amount" 
+                               min="0" step="100" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="approved_rate" class="form-label">Interest Rate (%)</label>
+                        <input type="number" class="form-control" id="approved_rate" 
+                               min="0" max="30" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="confirmApprove()">Approve</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPreapprovalId = null;
+
+function approvePreapproval(preapprovalId) {
+    currentPreapprovalId = preapprovalId;
+    const modal = new bootstrap.Modal(document.getElementById('approveModal'));
+    modal.show();
+}
+
+function confirmApprove() {
+    const data = {
+        approved_amount: parseFloat(document.getElementById('approved_amount').value),
+        approved_rate: parseFloat(document.getElementById('approved_rate').value),
+        notes: document.getElementById('notes').value
+    };
+    
+    fetch(`/api/preapproval/${currentPreapprovalId}/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while approving the pre-approval.');
+    });
+}
+
+function rejectPreapproval(preapprovalId) {
+    if (confirm('Are you sure you want to reject this pre-approval request?')) {
+        // Implementation for rejection
+        alert('Rejection functionality coming soon!');
+    }
+}
+
+function refreshData() {
+    location.reload();
+}
+</script>
+{% endblock %}
+
+
+
+
+
+
+

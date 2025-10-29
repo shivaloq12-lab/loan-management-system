@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Refinancing - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-exchange-alt text-primary"></i> Loan Refinancing</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#refinancingModal">
+                    <i class="fas fa-calculator"></i> Calculate Savings
+                </button>
+            </div>
+
+            <!-- Refinancing Calculator Modal -->
+            <div class="modal fade" id="refinancingModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Refinancing Calculator</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="refinancingForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="loan_select" class="form-label">Select Loan</label>
+                                            <select class="form-select" id="loan_select" required>
+                                                <option value="">Choose a loan...</option>
+                                                {% for loan in loans %}
+                                                <option value="{{ loan.id }}" 
+                                                        data-balance="{{ loan.remaining_balance }}"
+                                                        data-rate="{{ loan.interest_rate }}"
+                                                        data-term="{{ loan.loan_term_months }}">
+                                                    {{ loan.loan_number }} - ₹{{ "{:,.2f}".format(loan.remaining_balance) }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="new_rate" class="form-label">New Interest Rate (%)</label>
+                                            <input type="number" class="form-control" id="new_rate" 
+                                                   min="0" max="30" step="0.01" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="new_term" class="form-label">New Term (Months)</label>
+                                            <input type="number" class="form-control" id="new_term" 
+                                                   min="1" max="480" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="refinancing_fee" class="form-label">Refinancing Fee (₹)</label>
+                                            <input type="number" class="form-control" id="refinancing_fee" 
+                                                   min="0" step="0.01" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <!-- Results Section -->
+                            <div id="refinancingResults" class="mt-4" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Refinancing Analysis</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Current Loan</h6>
+                                                <p><strong>Monthly Payment:</strong> ₹<span id="current_monthly">0</span></p>
+                                                <p><strong>Interest Rate:</strong> <span id="current_rate">0</span>%</p>
+                                                <p><strong>Remaining Balance:</strong> ₹<span id="current_balance">0</span></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Refinanced Loan</h6>
+                                                <p><strong>New Monthly Payment:</strong> ₹<span id="new_monthly">0</span></p>
+                                                <p><strong>New Interest Rate:</strong> <span id="new_rate_display">0</span>%</p>
+                                                <p><strong>New Term:</strong> <span id="new_term_display">0</span> months</p>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <h5 class="text-success">₹<span id="monthly_savings">0</span></h5>
+                                                    <small class="text-muted">Monthly Savings</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <h5 class="text-success">₹<span id="total_savings">0</span></h5>
+                                                    <small class="text-muted">Total Savings</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <h5 class="text-info"><span id="payoff_reduction">0</span></h5>
+                                                    <small class="text-muted">Months Saved</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="calculateRefinancing()">Calculate</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Loans for Refinancing -->
+            <div class="row">
+                {% for loan in loans %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ loan.loan_number }}</h6>
+                            <span class="badge bg-success">{{ loan.status.title() }}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Original Amount</small>
+                                    <p class="mb-1"><strong>₹{{ "{:,.2f}".format(loan.principal_amount) }}</strong></p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Remaining Balance</small>
+                                    <p class="mb-1"><strong>₹{{ "{:,.2f}".format(loan.remaining_balance) }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Interest Rate</small>
+                                    <p class="mb-1"><strong>{{ loan.interest_rate }}%</strong></p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Monthly Payment</small>
+                                    <p class="mb-1"><strong>₹{{ "{:,.2f}".format(loan.monthly_payment) }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Term</small>
+                                    <p class="mb-1"><strong>{{ loan.loan_term_months }} months</strong></p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Type</small>
+                                    <p class="mb-1"><strong>{{ loan.loan_type }}</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary btn-sm" 
+                                        onclick="quickRefinancing('{{ loan.id }}', '{{ loan.remaining_balance }}', '{{ loan.interest_rate }}', '{{ loan.loan_term_months }}')">
+                                    <i class="fas fa-calculator"></i> Calculate Refinancing
+                                </button>
+                                <a href="/loan-performance/{{ loan.id }}" class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-chart-line"></i> View Performance
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if not loans %}
+            <div class="text-center py-5">
+                <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Active Loans</h4>
+                <p class="text-muted">You need active loans to refinance. Apply for a loan first.</p>
+                <a href="/apply-loan" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Apply for Loan
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function calculateRefinancing() {
+    const loanId = document.getElementById('loan_select').value;
+    const newRate = parseFloat(document.getElementById('new_rate').value);
+    const newTerm = parseInt(document.getElementById('new_term').value);
+    
+    if (!loanId || !newRate || !newTerm) {
+        alert('Please fill in all fields');
+        return;
+    }
+    
+    const data = {
+        loan_id: parseInt(loanId),
+        new_rate: newRate,
+        new_term: newTerm
+    };
+    
+    fetch('/api/refinancing/calculate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayRefinancingResults(data);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while calculating.');
+    });
+}
+
+function displayRefinancingResults(data) {
+    // Update current loan info
+    const selectedOption = document.getElementById('loan_select').selectedOptions[0];
+    document.getElementById('current_monthly').textContent = data.original_monthly.toFixed(2);
+    document.getElementById('current_rate').textContent = selectedOption.dataset.rate;
+    document.getElementById('current_balance').textContent = parseFloat(selectedOption.dataset.balance).toFixed(2);
+    
+    // Update new loan info
+    document.getElementById('new_monthly').textContent = data.savings.new_monthly_payment.toFixed(2);
+    document.getElementById('new_rate_display').textContent = document.getElementById('new_rate').value;
+    document.getElementById('new_term_display').textContent = document.getElementById('new_term').value;
+    
+    // Update savings
+    document.getElementById('monthly_savings').textContent = data.savings.monthly_savings.toFixed(2);
+    document.getElementById('total_savings').textContent = data.savings.total_savings.toFixed(2);
+    document.getElementById('payoff_reduction').textContent = data.savings.payoff_time_reduction;
+    
+    // Show results
+    document.getElementById('refinancingResults').style.display = 'block';
+}
+
+function quickRefinancing(loanId, balance, rate, term) {
+    // Pre-fill the form
+    document.getElementById('loan_select').value = loanId;
+    document.getElementById('new_rate').value = (parseFloat(rate) - 0.5).toFixed(2); // Suggest lower rate
+    document.getElementById('new_term').value = term;
+    
+    // Trigger change event to update display
+    document.getElementById('loan_select').dispatchEvent(new Event('change'));
+    
+    // Open modal
+    const modal = new bootstrap.Modal(document.getElementById('refinancingModal'));
+    modal.show();
+}
+
+// Update form when loan is selected
+document.getElementById('loan_select').addEventListener('change', function() {
+    const selectedOption = this.selectedOptions[0];
+    if (selectedOption) {
+        document.getElementById('new_rate').value = (parseFloat(selectedOption.dataset.rate) - 0.5).toFixed(2);
+        document.getElementById('new_term').value = selectedOption.dataset.term;
+    }
+});
+</script>
+{% endblock %}
+
+
+
+
+
+
+

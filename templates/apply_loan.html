@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Apply Loan - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Apply for a New Loan</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="loanForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="loan_type" class="form-label">Loan Type</label>
+                            <select class="form-select" id="loan_type" name="loan_type" required>
+                                <option value="">Select loan type</option>
+                                <option value="personal">Personal Loan</option>
+                                <option value="home">Home Loan</option>
+                                <option value="car">Car Loan</option>
+                                <option value="business">Business Loan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="principal_amount" class="form-label">Loan Amount (₹)</label>
+                            <input type="number" class="form-control" id="principal_amount" name="principal_amount" 
+                                   min="1000" max="1000000" required oninput="calculatePayment()">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="interest_rate" class="form-label">Interest Rate (%)</label>
+                            <input type="number" class="form-control" id="interest_rate" name="interest_rate" 
+                                   min="1" max="30" step="0.1" required oninput="calculatePayment()">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="loan_term" class="form-label">Loan Term (months)</label>
+                            <select class="form-select" id="loan_term" name="loan_term" required onchange="calculatePayment()">
+                                <option value="">Select term</option>
+                                <option value="12">12 months</option>
+                                <option value="24">24 months</option>
+                                <option value="36">36 months</option>
+                                <option value="48">48 months</option>
+                                <option value="60">60 months</option>
+                                <option value="120">120 months</option>
+                                <option value="180">180 months</option>
+                                <option value="240">240 months</option>
+                                <option value="360">360 months</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Monthly Payment</label>
+                            <div class="alert alert-info">
+                                <strong id="monthly_payment_display">₹0.00</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Total Payment</label>
+                            <div class="alert alert-info">
+                                <strong id="total_payment_display">₹0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="purpose" class="form-label">Loan Purpose</label>
+                        <textarea class="form-control" id="purpose" name="purpose" rows="3" 
+                                  placeholder="Please describe the purpose of this loan" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="documents" class="form-label">Upload Documents</label>
+                        <input type="file" class="form-control" id="documents" name="documents" multiple>
+                        <small class="form-text text-muted">
+                            You can upload supporting documents (ID proof, income proof, etc.)
+                        </small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Submit Application</button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calculatePayment() {
+    const principal = parseFloat(document.getElementById('principal_amount')?.value || 0);
+    const rate = parseFloat(document.getElementById('interest_rate')?.value || 0);
+    const term = parseInt(document.getElementById('loan_term')?.value || 0);
+
+    if (principal > 0 && rate > 0 && term > 0) {
+        const monthlyRate = rate / 100 / 12;
+        const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, term)) / 
+                              (Math.pow(1 + monthlyRate, term) - 1);
+        
+        document.getElementById('monthly_payment_display').textContent = 
+            '₹' + monthlyPayment.toFixed(2);
+        document.getElementById('total_payment_display').textContent = 
+            '₹' + (monthlyPayment * term).toFixed(2);
+    }
+}
+</script>
+{% endblock %}

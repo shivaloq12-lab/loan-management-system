@@ -1,0 +1,206 @@
+/* Custom styles for Loan Management System */
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.jumbotron {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.btn {
+    border-radius: 0.375rem;
+}
+
+.table th {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.alert {
+    border-radius: 0.375rem;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Dashboard specific styles */
+.dashboard-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+.dashboard-card.bg-success {
+    border-left-color: var(--success-color);
+}
+
+.dashboard-card.bg-warning {
+    border-left-color: var(--warning-color);
+}
+
+.dashboard-card.bg-info {
+    border-left-color: var(--info-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .jumbotron {
+        padding: 2rem 1rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Custom button styles */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Table hover effect */
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Status badges */
+.status-badge {
+    padding: 0.25em 0.5em;
+    font-size: 0.75em;
+    border-radius: 0.375rem;
+}
+
+.status-active {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.status-pending {
+    background-color: var(--warning-color);
+    color: black;
+}
+
+.status-rejected {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.status-completed {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+/* Form validation styles */
+.was-validated .form-control:valid {
+    border-color: var(--success-color);
+}
+
+.was-validated .form-control:invalid {
+    border-color: var(--danger-color);
+}
+
+/* Progress bars */
+.progress {
+    height: 1.5rem;
+    border-radius: 0.375rem;
+}
+
+.progress-bar {
+    background-color: var(--primary-color);
+}
+
+/* Modal styles */
+.modal-content {
+    border-radius: 0.5rem;
+}
+
+.modal-header {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Tooltip styles */
+.tooltip-inner {
+    background-color: var(--primary-color);
+}
+
+/* Footer styles */
+footer {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem 0;
+    margin-top: auto;
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Print styles */
+@media print {
+    .navbar, .btn, .alert {
+        display: none;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6;
+        box-shadow: none;
+    }
+}

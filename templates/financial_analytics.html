@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Analytics - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-pie"></i> Financial Analytics Dashboard</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Key Metrics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h2>{{ total_loans }}</h2>
+                                    <p class="mb-0">Total Loans</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h2>{{ active_loans }}</h2>
+                                    <p class="mb-0">Active Loans</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h2>₹{{ "{:,.0f}".format(total_amount) }}</h2>
+                                    <p class="mb-0">Total Amount</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h2>₹{{ "{:,.0f}".format(total_revenue) }}</h2>
+                                    <p class="mb-0">Total Revenue</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Applications Chart -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Monthly Loan Applications</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="monthlyChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Quick Actions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('loans') }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-list"></i> View All Loans
+                                        </a>
+                                        <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-cog"></i> System Settings
+                                        </a>
+                                        <a href="{{ url_for('payment_reminders') }}" class="btn btn-outline-warning">
+                                            <i class="fas fa-bell"></i> Payment Reminders
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Recent Loan Activity</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Applications</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for month, count in monthly_applications %}
+                                                <tr>
+                                                    <td>{{ month }}</td>
+                                                    <td>{{ count }}</td>
+                                                    <td>
+                                                        <span class="badge bg-info">Active</span>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const monthlyData = {{ monthly_applications | tojson }};
+    
+    const labels = monthlyData.map(item => item[0]);
+    const data = monthlyData.map(item => item[1]);
+    
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Loan Applications',
+                data: data,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+

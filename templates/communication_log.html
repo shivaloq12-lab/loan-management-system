@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Communication Log - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-comments text-primary"></i> Communication Log</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#communicationModal">
+                    <i class="fas fa-plus"></i> Add Communication
+                </button>
+            </div>
+
+            <!-- Add Communication Modal -->
+            <div class="modal fade" id="communicationModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Communication</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="communicationForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="communication_type" class="form-label">Type</label>
+                                            <select class="form-select" id="communication_type" required>
+                                                <option value="call">Phone Call</option>
+                                                <option value="email">Email</option>
+                                                <option value="sms">SMS</option>
+                                                <option value="meeting">Meeting</option>
+                                                <option value="note">Note</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="direction" class="form-label">Direction</label>
+                                            <select class="form-select" id="direction" required>
+                                                <option value="outbound">Outbound</option>
+                                                <option value="inbound">Inbound</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="customer_id" class="form-label">Customer</label>
+                                            <select class="form-select" id="customer_id" required>
+                                                <option value="">Select customer...</option>
+                                                <!-- Will be populated via JavaScript -->
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="loan_id" class="form-label">Related Loan (Optional)</label>
+                                            <select class="form-select" id="loan_id">
+                                                <option value="">No specific loan</option>
+                                                <!-- Will be populated via JavaScript -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="subject" class="form-label">Subject</label>
+                                    <input type="text" class="form-control" id="subject" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">Message</label>
+                                    <textarea class="form-control" id="message" rows="4" required></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="follow_up_required">
+                                            <label class="form-check-label" for="follow_up_required">
+                                                Follow-up Required
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3" id="follow_up_date_div" style="display: none;">
+                                            <label for="follow_up_date" class="form-label">Follow-up Date</label>
+                                            <input type="date" class="form-control" id="follow_up_date">
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="addCommunication()">Add Communication</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Communication Timeline -->
+            <div class="row">
+                <div class="col-12">
+                    {% if communications %}
+                    <div class="timeline">
+                        {% for communication in communications %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker 
+                                {% if communication.communication_type == 'call' %}bg-primary
+                                {% elif communication.communication_type == 'email' %}bg-info
+                                {% elif communication.communication_type == 'sms' %}bg-success
+                                {% elif communication.communication_type == 'meeting' %}bg-warning
+                                {% else %}bg-secondary{% endif %}">
+                                <i class="fas 
+                                    {% if communication.communication_type == 'call' %}fa-phone
+                                    {% elif communication.communication_type == 'email' %}fa-envelope
+                                    {% elif communication.communication_type == 'sms' %}fa-sms
+                                    {% elif communication.communication_type == 'meeting' %}fa-calendar
+                                    {% else %}fa-sticky-note{% endif %}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ communication.subject }}</h6>
+                                        <div>
+                                            <span class="badge 
+                                                {% if communication.direction == 'outbound' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                                {{ communication.direction.title() }}
+                                            </span>
+                                            {% if communication.follow_up_required %}
+                                            <span class="badge bg-warning">Follow-up Required</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-2">{{ communication.message }}</p>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">
+                                                    <strong>Customer:</strong> {{ communication.customer.user.full_name }}
+                                                </small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted">
+                                                    <strong>Created:</strong> {{ communication.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        {% if communication.loan %}
+                                        <div class="row mt-1">
+                                            <div class="col-12">
+                                                <small class="text-muted">
+                                                    <strong>Related Loan:</strong> {{ communication.loan.loan_number }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% if communication.follow_up_date %}
+                                        <div class="row mt-1">
+                                            <div class="col-12">
+                                                <small class="text-warning">
+                                                    <strong>Follow-up Date:</strong> {{ communication.follow_up_date.strftime('%Y-%m-%d') }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Communications</h4>
+                        <p class="text-muted">Start tracking customer communications to maintain better relationships.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#communicationModal">
+                            <i class="fas fa-plus"></i> Add Communication
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1;
+}
+
+.timeline-content {
+    margin-left: 20px;
+}
+</style>
+
+<script>
+function toggleFollowUpDate() {
+    const followUpRequired = document.getElementById('follow_up_required').checked;
+    const followUpDateDiv = document.getElementById('follow_up_date_div');
+    
+    if (followUpRequired) {
+        followUpDateDiv.style.display = 'block';
+        document.getElementById('follow_up_date').required = true;
+    } else {
+        followUpDateDiv.style.display = 'none';
+        document.getElementById('follow_up_date').required = false;
+    }
+}
+
+function addCommunication() {
+    const form = document.getElementById('communicationForm');
+    
+    const data = {
+        customer_id: parseInt(document.getElementById('customer_id').value),
+        loan_id: document.getElementById('loan_id').value ? parseInt(document.getElementById('loan_id').value) : null,
+        communication_type: document.getElementById('communication_type').value,
+        direction: document.getElementById('direction').value,
+        subject: document.getElementById('subject').value,
+        message: document.getElementById('message').value,
+        follow_up_required: document.getElementById('follow_up_required').checked,
+        follow_up_date: document.getElementById('follow_up_date').value || null
+    };
+    
+    if (!data.customer_id || !data.subject || !data.message) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    fetch('/api/communication-log', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while adding communication.');
+    });
+}
+
+// Load customers and loans when modal opens
+document.getElementById('communicationModal').addEventListener('show.bs.modal', function () {
+    // In a real application, you'd load this data from an API
+    // For now, we'll use placeholder data
+    const customerSelect = document.getElementById('customer_id');
+    const loanSelect = document.getElementById('loan_id');
+    
+    // Add placeholder options
+    customerSelect.innerHTML = '<option value="">Select customer...</option>';
+    loanSelect.innerHTML = '<option value="">No specific loan</option>';
+});
+
+// Toggle follow-up date field
+document.getElementById('follow_up_required').addEventListener('change', toggleFollowUpDate);
+</script>
+{% endblock %}
+
+
+
+
+
+
+

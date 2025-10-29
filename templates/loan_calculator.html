@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Calculator - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-calculator"></i> Loan Calculator
+                </h4>
+            </div>
+            <div class="card-body">
+                <form id="loanCalculatorForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="principal" class="form-label">Loan Amount (₹)</label>
+                            <input type="number" class="form-control" id="principal" name="principal" 
+                                   placeholder="Enter loan amount" min="1000" step="100" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="rate" class="form-label">Interest Rate (%)</label>
+                            <input type="number" class="form-control" id="rate" name="rate" 
+                                   placeholder="Enter interest rate" min="0" max="50" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="term" class="form-label">Loan Term (Months)</label>
+                            <input type="number" class="form-control" id="term" name="term" 
+                                   placeholder="Enter loan term" min="1" max="480" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quick Select</label>
+                            <select class="form-select" id="quickSelect" onchange="setQuickTerm()">
+                                <option value="">Select term...</option>
+                                <option value="12">1 Year (12 months)</option>
+                                <option value="24">2 Years (24 months)</option>
+                                <option value="36">3 Years (36 months)</option>
+                                <option value="48">4 Years (48 months)</option>
+                                <option value="60">5 Years (60 months)</option>
+                                <option value="120">10 Years (120 months)</option>
+                                <option value="180">15 Years (180 months)</option>
+                                <option value="240">20 Years (240 months)</option>
+                                <option value="360">30 Years (360 months)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center mb-3">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="calculateLoan()">
+                            <i class="fas fa-calculator"></i> Calculate Payment
+                        </button>
+                    </div>
+                </form>
+
+                <div id="calculationResults" class="mt-4" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5>Monthly Payment</h5>
+                                    <h3 id="monthlyPayment">₹0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>Total Payment</h5>
+                                    <h3 id="totalPayment">₹0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5>Total Interest</h5>
+                                    <h3 id="totalInterest">₹0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5>Interest Rate</h5>
+                                    <h3 id="interestRate">0%</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Amortization Schedule (First 12 Months)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="amortizationTable">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Payment</th>
+                                        <th>Principal</th>
+                                        <th>Interest</th>
+                                        <th>Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="amortizationBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setQuickTerm() {
+    const quickSelect = document.getElementById('quickSelect');
+    const termInput = document.getElementById('term');
+    if (quickSelect.value) {
+        termInput.value = quickSelect.value;
+    }
+}
+
+async function calculateLoan() {
+    const principal = parseFloat(document.getElementById('principal').value);
+    const rate = parseFloat(document.getElementById('rate').value);
+    const term = parseInt(document.getElementById('term').value);
+
+    if (!principal || !rate || !term) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/loan-calculator', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ principal, rate, term })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            displayResults(data);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error calculating loan: ' + error.message);
+    }
+}
+
+function displayResults(data) {
+    document.getElementById('monthlyPayment').textContent = '₹' + data.monthly_payment.toFixed(2);
+    document.getElementById('totalPayment').textContent = '₹' + data.total_payment.toFixed(2);
+    document.getElementById('totalInterest').textContent = '₹' + data.total_interest.toFixed(2);
+    document.getElementById('interestRate').textContent = document.getElementById('rate').value + '%';
+
+    // Display amortization schedule
+    const tbody = document.getElementById('amortizationBody');
+    tbody.innerHTML = '';
+
+    data.amortization_schedule.slice(0, 12).forEach(payment => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = payment.month;
+        row.insertCell(1).textContent = '₹' + payment.payment.toFixed(2);
+        row.insertCell(2).textContent = '₹' + payment.principal.toFixed(2);
+        row.insertCell(3).textContent = '₹' + payment.interest.toFixed(2);
+        row.insertCell(4).textContent = '₹' + payment.balance.toFixed(2);
+    });
+
+    document.getElementById('calculationResults').style.display = 'block';
+}
+</script>
+{% endblock %}
+

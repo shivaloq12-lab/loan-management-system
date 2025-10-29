@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Comparison - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-balance-scale"></i> Loan Comparison Tool</h3>
+                </div>
+                <div class="card-body">
+                    <form id="comparisonForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="principal" class="form-label">Loan Amount (₹)</label>
+                                    <input type="number" class="form-control" id="principal" name="principal" 
+                                           placeholder="Enter loan amount" min="1000" max="1000000" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="term" class="form-label">Loan Term (Months)</label>
+                                    <select class="form-control" id="term" name="term" required>
+                                        <option value="">Select term</option>
+                                        <option value="12">12 months</option>
+                                        <option value="24">24 months</option>
+                                        <option value="36">36 months</option>
+                                        <option value="48">48 months</option>
+                                        <option value="60">60 months</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-calculator"></i> Compare Loans
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="comparisonResults" class="mt-4" style="display: none;">
+                        <h4>Loan Comparison Results</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Loan Type</th>
+                                        <th>Interest Rate</th>
+                                        <th>Monthly Payment</th>
+                                        <th>Total Interest</th>
+                                        <th>Total Cost</th>
+                                        <th>Savings</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comparisonTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <h6><i class="fas fa-info-circle"></i> Comparison Notes</h6>
+                            <ul class="mb-0">
+                                <li>Rates are estimates and may vary based on credit score</li>
+                                <li>Additional fees may apply</li>
+                                <li>Secured loans require collateral</li>
+                                <li>Business loans have different qualification requirements</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('comparisonForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        principal: parseFloat(formData.get('principal')),
+        term: parseInt(formData.get('term'))
+    };
+    
+    if (!data.principal || !data.term) {
+        alert('Please fill in all fields');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/loan-comparison', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        const result = await response.json();
+        displayComparisonResults(result.comparisons);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error comparing loans. Please try again.');
+    }
+});
+
+function displayComparisonResults(comparisons) {
+    const resultsDiv = document.getElementById('comparisonResults');
+    const tableBody = document.getElementById('comparisonTableBody');
+    
+    // Sort by total cost (ascending)
+    comparisons.sort((a, b) => a.total_cost - b.total_cost);
+    
+    tableBody.innerHTML = '';
+    
+    comparisons.forEach((loan, index) => {
+        const row = document.createElement('tr');
+        if (index === 0) {
+            row.classList.add('table-success');
+        }
+        
+        const savings = index === 0 ? 'Best Deal' : 
+                      `₹${(comparisons[0].total_interest - loan.total_interest).toFixed(2)}`;
+        
+        row.innerHTML = `
+            <td>
+                <strong>${loan.name}</strong><br>
+                <small class="text-muted">${loan.description}</small>
+            </td>
+            <td><span class="badge bg-primary">${loan.rate}%</span></td>
+            <td>₹${loan.monthly_payment.toFixed(2)}</td>
+            <td>₹${loan.total_interest.toFixed(2)}</td>
+            <td>₹${loan.total_payment.toFixed(2)}</td>
+            <td><span class="text-success">${savings}</span></td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    resultsDiv.style.display = 'block';
+    resultsDiv.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+

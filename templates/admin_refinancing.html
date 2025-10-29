@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Refinancing - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-exchange-alt text-primary"></i> Refinancing Management</h2>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" onclick="refreshData()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Refinancing Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">{{ refinancing_requests|length }}</h5>
+                            <p class="card-text">Total Requests</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">{{ refinancing_requests|selectattr('status', 'equalto', 'pending')|list|length }}</h5>
+                            <p class="card-text">Pending</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ refinancing_requests|selectattr('status', 'equalto', 'completed')|list|length }}</h5>
+                            <p class="card-text">Completed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">${{ "{:,.0f}".format(refinancing_requests|sum(attribute='savings_amount') or 0) }}</h5>
+                            <p class="card-text">Total Savings</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Refinancing Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Refinancing Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Original Loan</th>
+                                    <th>New Loan</th>
+                                    <th>Type</th>
+                                    <th>Original Rate</th>
+                                    <th>New Rate</th>
+                                    <th>Savings</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in refinancing_requests %}
+                                <tr>
+                                    <td><strong>{{ request.original_loan.loan_number }}</strong></td>
+                                    <td>
+                                        {% if request.new_loan %}
+                                            {{ request.new_loan.loan_number }}
+                                        {% else %}
+                                            <span class="text-muted">Not Created</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.refinancing_type.replace('_', ' ').title() }}</td>
+                                    <td>{{ request.original_rate }}%</td>
+                                    <td>{{ request.new_rate }}%</td>
+                                    <td>
+                                        {% if request.savings_amount > 0 %}
+                                            <span class="text-success">${{ "{:,.2f}".format(request.savings_amount) }}</span>
+                                        {% else %}
+                                            <span class="text-muted">$0.00</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if request.status == 'completed' %}bg-success
+                                            {% elif request.status == 'approved' %}bg-info
+                                            {% elif request.status == 'pending' %}bg-warning
+                                            {% elif request.status == 'rejected' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ request.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ request.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if request.status == 'pending' %}
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-success" onclick="approveRefinancing({{ request.id }})">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                            <button class="btn btn-danger" onclick="rejectRefinancing({{ request.id }})">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        </div>
+                                        {% elif request.status == 'approved' %}
+                                        <button class="btn btn-primary btn-sm" onclick="completeRefinancing({{ request.id }})">
+                                            <i class="fas fa-check-circle"></i> Complete
+                                        </button>
+                                        {% else %}
+                                        <small class="text-muted">{{ request.status.title() }}</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if not refinancing_requests %}
+            <div class="text-center py-5">
+                <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Refinancing Requests</h4>
+                <p class="text-muted">Refinancing requests will appear here when customers submit them.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function approveRefinancing(requestId) {
+    if (confirm('Are you sure you want to approve this refinancing request?')) {
+        // Implementation for approval
+        alert('Approval functionality coming soon!');
+    }
+}
+
+function rejectRefinancing(requestId) {
+    if (confirm('Are you sure you want to reject this refinancing request?')) {
+        // Implementation for rejection
+        alert('Rejection functionality coming soon!');
+    }
+}
+
+function completeRefinancing(requestId) {
+    if (confirm('Are you sure you want to mark this refinancing as completed?')) {
+        // Implementation for completion
+        alert('Completion functionality coming soon!');
+    }
+}
+
+function refreshData() {
+    location.reload();
+}
+</script>
+{% endblock %}
+
+
+
+
+
+
+

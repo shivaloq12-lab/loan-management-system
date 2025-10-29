@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="fas fa-cog"></i> System Settings
+        </h2>
+        <p class="text-muted">Manage system-wide settings and configurations</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">General Settings</h5>
+            </div>
+            <div class="card-body">
+                <form id="settingsForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="company_name" class="form-label">Company Name</label>
+                            <input type="text" class="form-control" id="company_name" 
+                                   value="{{ settings_dict.get('company_name', 'Loan Management System') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="company_email" class="form-label">Company Email</label>
+                            <input type="email" class="form-control" id="company_email" 
+                                   value="{{ settings_dict.get('company_email', 'admin@loansystem.com') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="default_interest_rate" class="form-label">Default Interest Rate (%)</label>
+                            <input type="number" class="form-control" id="default_interest_rate" 
+                                   value="{{ settings_dict.get('default_interest_rate', '5.5') }}" 
+                                   step="0.01" min="0" max="50">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="max_loan_amount" class="form-label">Maximum Loan Amount ($)</label>
+                            <input type="number" class="form-control" id="max_loan_amount" 
+                                   value="{{ settings_dict.get('max_loan_amount', '1000000') }}" 
+                                   step="1000" min="1000">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="late_fee_percentage" class="form-label">Late Fee Percentage (%)</label>
+                            <input type="number" class="form-control" id="late_fee_percentage" 
+                                   value="{{ settings_dict.get('late_fee_percentage', '2.5') }}" 
+                                   step="0.01" min="0" max="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="grace_period_days" class="form-label">Grace Period (Days)</label>
+                            <input type="number" class="form-control" id="grace_period_days" 
+                                   value="{{ settings_dict.get('grace_period_days', '5') }}" 
+                                   min="0" max="30">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email_notifications" class="form-label">Email Notifications</label>
+                        <select class="form-select" id="email_notifications">
+                            <option value="enabled" {% if settings_dict.get('email_notifications', 'enabled') == 'enabled' %}selected{% endif %}>Enabled</option>
+                            <option value="disabled" {% if settings_dict.get('email_notifications', 'enabled') == 'disabled' %}selected{% endif %}>Disabled</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="maintenance_mode" class="form-label">Maintenance Mode</label>
+                        <select class="form-select" id="maintenance_mode">
+                            <option value="disabled" {% if settings_dict.get('maintenance_mode', 'disabled') == 'disabled' %}selected{% endif %}>Disabled</option>
+                            <option value="enabled" {% if settings_dict.get('maintenance_mode', 'disabled') == 'enabled' %}selected{% endif %}>Enabled</option>
+                        </select>
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                            <i class="fas fa-save"></i> Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">System Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Version:</strong> 2.0.0
+                </div>
+                <div class="mb-3">
+                    <strong>Database:</strong> SQLite
+                </div>
+                <div class="mb-3">
+                    <strong>Last Updated:</strong> {{ current_time.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+                <div class="mb-3">
+                    <strong>Total Users:</strong> {{ total_users }}
+                </div>
+                <div class="mb-3">
+                    <strong>Active Loans:</strong> {{ active_loans }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="sendTestEmail()">
+                        <i class="fas fa-envelope"></i> Send Test Email
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="backupDatabase()">
+                        <i class="fas fa-download"></i> Backup Database
+                    </button>
+                    <button class="btn btn-outline-info" onclick="clearCache()">
+                        <i class="fas fa-broom"></i> Clear Cache
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function saveSettings() {
+    const settings = {
+        company_name: document.getElementById('company_name').value,
+        company_email: document.getElementById('company_email').value,
+        default_interest_rate: document.getElementById('default_interest_rate').value,
+        max_loan_amount: document.getElementById('max_loan_amount').value,
+        late_fee_percentage: document.getElementById('late_fee_percentage').value,
+        grace_period_days: document.getElementById('grace_period_days').value,
+        email_notifications: document.getElementById('email_notifications').value,
+        maintenance_mode: document.getElementById('maintenance_mode').value
+    };
+    
+    try {
+        const response = await fetch('/api/settings/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        if (response.ok) {
+            showSuccess('Settings saved successfully!');
+        } else {
+            showError('Error saving settings');
+        }
+    } catch (error) {
+        showError('Error saving settings: ' + error.message);
+    }
+}
+
+function sendTestEmail() {
+    // Implementation for sending test email
+    showInfo('Test email functionality would be implemented here');
+}
+
+function backupDatabase() {
+    // Implementation for database backup
+    showInfo('Database backup functionality would be implemented here');
+}
+
+function clearCache() {
+    // Implementation for clearing cache
+    showInfo('Cache cleared successfully!');
+}
+
+function showSuccess(message) {
+    // Show success message
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container').insertBefore(alert, document.querySelector('.row'));
+}
+
+function showError(message) {
+    // Show error message
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container').insertBefore(alert, document.querySelector('.row'));
+}
+
+function showInfo(message) {
+    // Show info message
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-info alert-dismissible fade show';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container').insertBefore(alert, document.querySelector('.row'));
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Credit Score - Loan Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-line"></i> Your Credit Score</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="credit-score-display mb-4">
+                        <div class="score-circle mx-auto mb-3">
+                            <div class="score-number">{{ credit_score }}</div>
+                            <div class="score-label">Credit Score</div>
+                        </div>
+                        
+                        <div class="score-range mb-4">
+                            <div class="range-bar">
+                                <div class="range-fill" style="width: {{ (credit_score - 300) / 550 * 100 }}%"></div>
+                            </div>
+                            <div class="range-labels d-flex justify-content-between">
+                                <span>300</span>
+                                <span>850</span>
+                            </div>
+                        </div>
+                        
+                        <div class="score-category">
+                            {% if credit_score >= 750 %}
+                                <span class="badge bg-success fs-6">Excellent</span>
+                            {% elif credit_score >= 700 %}
+                                <span class="badge bg-primary fs-6">Good</span>
+                            {% elif credit_score >= 650 %}
+                                <span class="badge bg-warning fs-6">Fair</span>
+                            {% else %}
+                                <span class="badge bg-danger fs-6">Poor</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="score-factors">
+                        <h5>Factors Affecting Your Score</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="factor-item">
+                                    <i class="fas fa-dollar-sign text-success"></i>
+                                    <span>Income Level</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="factor-item">
+                                    <i class="fas fa-briefcase text-info"></i>
+                                    <span>Employment Status</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="factor-item">
+                                    <i class="fas fa-history text-warning"></i>
+                                    <span>Payment History</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="factor-item">
+                                    <i class="fas fa-chart-bar text-primary"></i>
+                                    <span>Credit Utilization</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="improvement-tips mt-4">
+                        <h5>Tips to Improve Your Score</h5>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Make payments on time</li>
+                            <li><i class="fas fa-check text-success"></i> Keep credit utilization low</li>
+                            <li><i class="fas fa-check text-success"></i> Maintain stable employment</li>
+                            <li><i class="fas fa-check text-success"></i> Avoid opening too many new accounts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.score-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    margin: 0 auto;
+}
+
+.score-number {
+    font-size: 3rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.range-bar {
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.range-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+    transition: width 0.5s ease;
+}
+
+.range-labels {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.factor-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.factor-item i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.improvement-tips ul li {
+    margin-bottom: 8px;
+    padding: 5px 0;
+}
+
+.improvement-tips ul li i {
+    margin-right: 8px;
+}
+</style>
+{% endblock %}
+
+
+
+
+
+
+
+
+
